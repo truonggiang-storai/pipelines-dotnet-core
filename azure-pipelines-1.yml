@@ -16,3 +16,45 @@ resources:
     source: 'Build pipeline' # This must match the name of the build pipeline
     branch: 'main'
     trigger: true # Runs every time a build pipeline has completed
+
+stages:
+  - stage: DeployWebsite
+    displayName: 'Deploy website'       
+    pool:
+      vmImage: windows-latest
+     
+    jobs:   
+    - deployment: DeployWebsite
+      displayName: 'Deploy website'
+      environment: 'test.TRUONGGIANG-DEV' # Name of the environment followed by the name of the resource
+      strategy:
+       runOnce:
+         deploy:
+          steps:
+          - checkout: none
+           
+          - download: 'buildPipeline' # The alias of our build pipeline
+            name: 'DownloadBuildArtifacts'           
+            displayName: 'Download build artifacts'
+            artifact: 'Sample' # The name of the artifact from the build pipeline.
+          - task: IISWebAppManagementOnMachineGroup@0
+            name: 'StopIIS'
+            displayName: 'Stop IIS website - ${{ variables.IISWebsiteName }}'
+            inputs:
+              IISDeploymentType: 'IISWebsite'
+              ActionIISWebsite: 'StopWebsite'
+              StartStopWebsiteName: '${{ variables.IISWebsiteName }}'  
+          - task: IISWebAppDeploymentOnMachineGroup@0
+            name: 'DeployIIS'
+            displayName: 'Deploy IIS website - ${{ variables.IISWebsiteName }}'         
+            inputs:
+              WebSiteName: '${{ variables.IISWebsiteName }}'             
+              Package: '$(Pipeline.Workspace)\buildPipeline\Sample\pipelines-dotnet-core'
+              TakeAppOfflineFlag: true
+          - task: IISWebAppManagementOnMachineGroup@0
+            name: 'StartIIS'
+            displayName: 'Start IIS website - ${{ variables.IISWebsiteName }}'               
+            inputs:
+              IISDeploymentType: 'IISWebsite'
+              ActionIISWebsite: 'StartWebsite'
+              StartStopWebsiteName: '${{ variables.IISWebsiteName }}'
