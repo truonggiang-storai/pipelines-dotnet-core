@@ -4,16 +4,15 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- none
 
-pool:
-  vmImage: ubuntu-latest
+variables:
+  IISWebsiteName: 'Sample'
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+resources:
+  pipelines:
+  - pipeline: 'buildPipeline' # Alias for pipeline resource. Can be anything.
+    project: 'Sample' # This must match the name of the project
+    source: 'Build pipeline' # This must match the name of the build pipeline
+    branch: 'main'
+    trigger: true # Runs every time a build pipeline has completed
